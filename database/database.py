@@ -1,7 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy import Integer, func, ForeignKey, String, ARRAY
 from datetime import datetime
-from sqlalchemy import Integer, func, ForeignKey
+from typing import Annotated, List
 
 from database.config import settings
 
@@ -24,3 +25,8 @@ class Base(AsyncAttrs, DeclarativeBase):
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__.lower() + "s"
+
+
+# Basic annotations initialization
+uniq_str_an = Annotated[str, mapped_column(unique=True)]    # Unique string annotation
+array_or_none_an = Annotated[List[str] | None, mapped_column(ARRAY(String))]    # Array or None annotation
