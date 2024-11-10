@@ -1,17 +1,32 @@
+from email.policy import default
+
 from sqlalchemy import ForeignKey, text, ARRAY, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
 from database.db import Base, uniq_str_an
-from database.sql_enums import GenderEnum, ProfessionEnum, StatusPostEnum, RatingEnum
+from database.sql_enums import GenderEnum, ProfessionEnum, RoleEnum, DiagnosesEnum
 
 
+# Structure of a database
+# 1. Users
+# 2. Patients
+# 3. Roles
+# 5. Profiles
+# 6. Hospital
+
+# Define User class (User is a person, who can work with service)
 class User(Base):
+    # Basic variables
     username: Mapped[uniq_str_an]
     email: Mapped[uniq_str_an]
-    password: Mapped[str]
-    # profile_id: Mapped[int | None] = mapped_column(ForeignKey("profiles.id"))
+    password: Mapped[str]  # Needs to be encrypted in future
 
+    # Foreign keys
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"))
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id"))
+
+    # Relations
     # One-to-one with Profile
     profile: Mapped["Profile"] = relationship(
         "Profile",
@@ -19,34 +34,31 @@ class User(Base):
         uselist=False,  # Ключевой параметр для связи один-к-одному
         lazy="joined"  # Автоматически подгружает profile при запросе user
     )
-    # One-to-many with Posts
-    posts: Mapped[list["Post"]] = relationship(
-        "Post",
+    # One-to-one with Role
+    role: Mapped["Role"] = relationship(
+        "Role",
         back_populates="user",
-        cascade="all, delete-orphan"  # Удаляет посты при удалении пользователя
-    )
-    # One-to-many with Comments
-    comments: Mapped[list["Comment"]] = relationship(
-        "Comment",
-        back_populates="user",
-        cascade="all, delete-orphan"  # При удалении User удаляются и связанные Comment
+        uselist=False,
+        lazy="joined"
     )
 
 
 class Profile(Base):
+    # Basic values
     first_name: Mapped[str]
-    last_name: Mapped[str]
+    last_name: Mapped[str | None]
     age: Mapped[int | None]
-    gender: Mapped[GenderEnum]
+    gender: Mapped[GenderEnum | None]
     profession: Mapped[ProfessionEnum] = mapped_column(
         default=ProfessionEnum.DEVELOPER,
-        # server_default=text("UNEMPLOYED")
+        server_default=text("'UNEMPLOYED'")
     )
-    interests: Mapped[List[str] | None] = mapped_column(ARRAY(String))
     contacts: Mapped[dict | None] = mapped_column(JSON)
-    # Внешний ключ на таблицу users
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), unique=True)
 
+    # Foreign keys
+    ...
+
+    # Relations
     # Back One-to-one with User
     user: Mapped["User"] = relationship(
         "User",
@@ -55,41 +67,62 @@ class Profile(Base):
     )
 
 
-class Post(Base):
-    title: Mapped[str]
-    content: Mapped[str] =  mapped_column(Text)
-    main_photo_url: Mapped[str]
-    photos_url: Mapped[List[str] | None] = mapped_column(ARRAY(String))
-    status: Mapped[StatusPostEnum] = mapped_column(default=StatusPostEnum.PUBLISHED, server_default=text("'DRAFT'"))
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+class Patient(Base):
+    # Basic values
+    first_name: Mapped[str]
+    last_name: Mapped[str]
+    age: Mapped[int]
+    gender: Mapped[GenderEnum]
+    profession: Mapped[ProfessionEnum] = mapped_column(
+        default=ProfessionEnum.DEVELOPER,
+        server_default=text("'UNEMPLOYED'")
+    )
+    contacts: Mapped[dict | None] = mapped_column(JSON)
+    diagnosis: Mapped[DiagnosesEnum] = mapped_column(
+        default=DiagnosesEnum.HEALTHY,
+        server_default=text("'HEALTHY'")
+    )
 
-    # Many-to-one with User
+    # Foreign keys
+    hospital_id: Mapped[int] = mapped_column(ForeignKey("hospitals.id"))
+
+    # Relations
+    # Many-to-one with Hospital
+    hospital: Mapped["Patient"] = relationship(
+        "Patient",
+        back_populates="patient",
+        uselist=False,
+        lazy="joined"
+    )
+
+
+class Hospital(Base):
+    # Basic values
+    name: Mapped[uniq_str_an]
+    address: Mapped[uniq_str_an | None]
+
+    # Foreign keys
+    ...
+
+    # Relations
+    patients: Mapped[list["Patient"]] = relationship(
+        "Patient",
+        back_populates="hospital",
+        lazy="joined"
+    )
+
+
+class Role(Base):
+    # Basic values
+    name: Mapped[RoleEnum] = mapped_column(default=RoleEnum.USER, server_default=text("'USER'"))
+
+    # Foreign keys
+    ...
+
+    # Relations
+    # Back One-to-one with User
     user: Mapped["User"] = relationship(
         "User",
-        back_populates="posts"
-    )
-    # One-to-many with Comments
-    comments: Mapped[list["Comment"]] = relationship(
-        "Comment",
-        back_populates="post",
-        cascade="all, delete-orphan"
-    )
-
-
-class Comment(Base):
-    content: Mapped[str] = mapped_column(Text)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
-    is_published: Mapped[bool] =  mapped_column(default=True, server_default=text("'false'"))
-    rating: Mapped[RatingEnum] = mapped_column(default=RatingEnum.FIVE, server_default=text("'SEVEN'"))
-
-    # Many-to-one with Post
-    post: Mapped["Post"] = relationship(
-        "Post",
-        back_populates="comments",
-    )
-    # Many-to-one with User
-    user: Mapped["User"] = relationship(
-        "User",
-        back_populates="comments",
+        back_populates="role",
+        uselist=False,
     )

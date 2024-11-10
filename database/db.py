@@ -6,6 +6,14 @@ from typing import Annotated, List
 
 from database.config import settings
 
+# Structure of a database
+# 1. Users
+# 2. Patients
+# 3. Roles
+# 5. Profiles
+# 6. Hospital
+
+# Define database URL
 DATABASE_URL = settings.get_db_url()
 
 # Create async engine for DB work
@@ -18,19 +26,23 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True  # Abstract class (No table created for it)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)  # Automatically create id
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())  # Automatically create creation timestamp
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(),
+                                                 onupdate=func.now())  # Automatically create update timstamp
 
+    # Script to automatically create table names
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__.lower() + "s"
 
 
 # Basic annotations initialization
-uniq_str_an = Annotated[str, mapped_column(unique=True)]    # Unique string annotation
-array_or_none_an = Annotated[List[str] | None, mapped_column(ARRAY(String))]    # Array or None annotation
+uniq_str_an = Annotated[str, mapped_column(unique=True)]  # Unique string annotation
+array_or_none_an = Annotated[List[str] | None, mapped_column(ARRAY(String))]  # Array or None annotation
 
+
+# Connection decorator to make simple and fancy code
 def connection(method):
     async def wrapper(*args, **kwargs):
         async with async_session_maker() as session:

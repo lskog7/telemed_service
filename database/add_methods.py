@@ -2,11 +2,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from asyncio import run
 
 from database.db import connection
-from database.models import User
+from database.models import User, Profile, Patient, Hospital, Role
 
 
 @connection
-async def create_user_example_1(username: str, email: str, password: str, session: AsyncSession) -> int:
+async def create_user(username: str, email: str, password: str, session: AsyncSession) -> int:
     """
     Создает нового пользователя с использованием ORM SQLAlchemy.
 

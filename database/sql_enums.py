@@ -6,14 +6,6 @@ class GenderEnum(str, enum.Enum):
     FEMALE = "женщина"
 
 
-class StatusPostEnum(str, enum.Enum):
-    PUBLISHED = "опубликован"
-    DELETED = "удален"
-    UNDER_MODERATION = "на модерации"
-    DRAFT = "черновик"
-    SCHEDULED = "отложенная публикация"
-
-
 class ProfessionEnum(str, enum.Enum):
     DEVELOPER = "разработчик"
     DESIGNER = "дизайнер"
@@ -30,14 +22,23 @@ class ProfessionEnum(str, enum.Enum):
     UNEMPLOYED = "безработный"
 
 
-class RatingEnum(int, enum.Enum):
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
-    SIX = 6
-    SEVEN = 7
-    EIGHT = 8
-    NINE = 9
-    TEN = 10
+class RoleEnum(str, enum.Enum):
+    ADMIN = "администратор"
+    MODERATOR = "модератор"
+    USER = "пользователь"
+
+
+class DiagnosesEnum(str, enum.Enum):
+    DIABETES = "диабет"
+    HYPERTENSION = "гипертония"
+    ASTHMA = "астма"
+    DEPRESSION = "депрессия"
+    ANXIETY = "тревожное расстройство"
+    ARTHRITIS = "артрит"
+    HEART_DISEASE = "сердечно-сосудистые заболевания"
+    CANCER = "рак"
+    ALLERGY = "аллергия"
+    INFECTION = "инфекция"
+    OBESITY = "ожирение"
+    MIGRAINE = "мигрень"
+    HEALTHY = "здоров"
