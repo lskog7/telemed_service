@@ -6,7 +6,7 @@ from typing import Annotated, List
 
 from database.config import settings
 
-DATABASE_URL = settings.get_sqlite_db_url()
+DATABASE_URL = settings.get_db_url()
 
 # Create async engine for DB work
 engine = create_async_engine(url=DATABASE_URL)
@@ -30,3 +30,17 @@ class Base(AsyncAttrs, DeclarativeBase):
 # Basic annotations initialization
 uniq_str_an = Annotated[str, mapped_column(unique=True)]    # Unique string annotation
 array_or_none_an = Annotated[List[str] | None, mapped_column(ARRAY(String))]    # Array or None annotation
+
+def connection(method):
+    async def wrapper(*args, **kwargs):
+        async with async_session_maker() as session:
+            try:
+                # Явно не открываем транзакции, так как они уже есть в контексте
+                return await method(*args, session=session, **kwargs)
+            except Exception as e:
+                await session.rollback()  # Откатываем сессию при ошибке
+                raise e  # Поднимаем исключение дальше
+            finally:
+                await session.close()  # Закрываем сессию
+
+    return wrapper

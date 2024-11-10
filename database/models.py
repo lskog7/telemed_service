@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey, text, ARRAY, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
-from database.database import Base, uniq_str_an
+from database.db import Base, uniq_str_an
 from database.sql_enums import GenderEnum, ProfessionEnum, StatusPostEnum, RatingEnum
 
 
@@ -10,7 +10,7 @@ class User(Base):
     username: Mapped[uniq_str_an]
     email: Mapped[uniq_str_an]
     password: Mapped[str]
-    profile_id: Mapped[int | None] = mapped_column(ForeignKey("profiles.id"))
+    # profile_id: Mapped[int | None] = mapped_column(ForeignKey("profiles.id"))
 
     # One-to-one with Profile
     profile: Mapped["Profile"] = relationship(
@@ -42,8 +42,10 @@ class Profile(Base):
         default=ProfessionEnum.DEVELOPER,
         # server_default=text("UNEMPLOYED")
     )
-    interests: Mapped[List[str] | None] = mapped_column(JSON)
+    interests: Mapped[List[str] | None] = mapped_column(ARRAY(String))
     contacts: Mapped[dict | None] = mapped_column(JSON)
+    # Внешний ключ на таблицу users
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), unique=True)
 
     # Back One-to-one with User
     user: Mapped["User"] = relationship(
@@ -57,7 +59,7 @@ class Post(Base):
     title: Mapped[str]
     content: Mapped[str] =  mapped_column(Text)
     main_photo_url: Mapped[str]
-    photos_url: Mapped[List[str] | None] = mapped_column(JSON)
+    photos_url: Mapped[List[str] | None] = mapped_column(ARRAY(String))
     status: Mapped[StatusPostEnum] = mapped_column(default=StatusPostEnum.PUBLISHED, server_default=text("'DRAFT'"))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
 
