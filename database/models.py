@@ -17,16 +17,19 @@ from database.sql_enums import GenderEnum, ProfessionEnum, RoleEnum, DiagnosesEn
 
 # Define User class (User is a person, who can work with service)
 class User(Base):
+
     # Basic variables
+
     username: Mapped[uniq_str_an]
     email: Mapped[uniq_str_an]
     password: Mapped[str]  # Needs to be encrypted in future
 
     # Foreign keys
+
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"))
-    profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id"))
 
     # Relations
+
     # One-to-one with Profile
     profile: Mapped["Profile"] = relationship(
         "Profile",
@@ -34,19 +37,21 @@ class User(Base):
         uselist=False,  # Ключевой параметр для связи один-к-одному
         lazy="joined"  # Автоматически подгружает profile при запросе user
     )
-    # One-to-one with Role
+
+    # One-to-many with Role
     role: Mapped["Role"] = relationship(
         "Role",
-        back_populates="user",
-        uselist=False,
+        back_populates="users",
         lazy="joined"
     )
 
 
 class Profile(Base):
+
     # Basic values
+
     first_name: Mapped[str]
-    last_name: Mapped[str | None]
+    last_name: Mapped[str]
     age: Mapped[int | None]
     gender: Mapped[GenderEnum | None]
     profession: Mapped[ProfessionEnum] = mapped_column(
@@ -56,9 +61,11 @@ class Profile(Base):
     contacts: Mapped[dict | None] = mapped_column(JSON)
 
     # Foreign keys
-    ...
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     # Relations
+
     # Back One-to-one with User
     user: Mapped["User"] = relationship(
         "User",
@@ -68,7 +75,9 @@ class Profile(Base):
 
 
 class Patient(Base):
+
     # Basic values
+
     first_name: Mapped[str]
     last_name: Mapped[str]
     age: Mapped[int]
@@ -84,31 +93,36 @@ class Patient(Base):
     )
 
     # Foreign keys
+
     hospital_id: Mapped[int] = mapped_column(ForeignKey("hospitals.id"))
 
     # Relations
+
     # Many-to-one with Hospital
-    hospital: Mapped["Patient"] = relationship(
-        "Patient",
-        back_populates="patient",
+    hospital: Mapped["Hospital"] = relationship(
+        "Hospital",
+        back_populates="patients",
         uselist=False,
         lazy="joined"
     )
 
 
 class Hospital(Base):
+
     # Basic values
+
     name: Mapped[uniq_str_an]
     address: Mapped[uniq_str_an | None]
 
     # Foreign keys
+
     ...
 
     # Relations
+
     patients: Mapped[list["Patient"]] = relationship(
         "Patient",
-        back_populates="hospital",
-        lazy="joined"
+        back_populates="hospital"
     )
 
 
@@ -120,9 +134,8 @@ class Role(Base):
     ...
 
     # Relations
-    # Back One-to-one with User
-    user: Mapped["User"] = relationship(
+    # Back Many-to-one with User
+    users: Mapped[list["User"]] = relationship(
         "User",
         back_populates="role",
-        uselist=False,
     )
